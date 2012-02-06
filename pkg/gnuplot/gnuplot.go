@@ -125,15 +125,15 @@ func (self *Plotter) PlotX(data []float64, title string) os.Error {
 	}
 	f.Close()
 	cmd := self.plotcmd
-	if self.nplots > 0 {
-		cmd = "replot"
-	}
+	//if self.nplots > 0 {
+	//	cmd = "replot"
+	//}
 
 	var line string
 	if title == "" {
 		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, self.style)
 	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
+		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s lw .7",
 			cmd, fname, title, self.style)
 	}
 	self.nplots += 1
