@@ -9,8 +9,17 @@ import (
     "exec"
 )
 
-var g_gnuplot_cmd string
-var g_gnuplot_prefix string = "go-gnuplot-"
+var gnuplotCmd string
+var gplotPrefix string = "gplot-"
+
+func init() {
+	var err os.Error
+	gnuplotCmd, err = exec.LookPath("gnuplot")
+	if err != nil {
+		fmt.Printf("** could not find path to 'gnuplot':\n%v\n", err)
+		panic("could not find 'gnuplot'")
+	}
+}
 
 func min(a, b int) int {
 	if a < b {
@@ -19,52 +28,34 @@ func min(a, b int) int {
 	return b
 }
 
-func init() {
-	var err os.Error
-	g_gnuplot_cmd, err = exec.LookPath("gnuplot")
-	if err != nil {
-		fmt.Printf("** could not find path to 'gnuplot':\n%v\n", err)
-		panic("could not find 'gnuplot'")
-	}
-	fmt.Printf("-- found gnuplot command: %s\n", g_gnuplot_cmd)
-}
-
-type gnuplot_error struct {
-	err string
-}
-
-func (e *gnuplot_error) String() string {
-	return e.err
-}
-
-type plotter_process struct {
+type plotterProcess struct {
 	handle *exec.Cmd
 	stdin  io.WriteCloser
 }
 
-func new_plotter_proc(persist bool) (*plotter_process, os.Error) {
+func newPlotterProcess(persist bool) (*plotterProcess, os.Error) {
 	proc_args := []string{}
 	if persist {
 		proc_args = append(proc_args, "-persist")
 	}
-	fmt.Printf("--> [%v] %v\n", g_gnuplot_cmd, proc_args)
-	cmd := exec.Command(g_gnuplot_cmd, proc_args...)
+	fmt.Printf("--> [%v] %v\n", gnuplotCmd, proc_args)
+	cmd := exec.Command(gnuplotCmd, proc_args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
-	return &plotter_process{handle: cmd, stdin: stdin}, cmd.Start()
+	return &plotterProcess{handle: cmd, stdin: stdin}, cmd.Start()
 }
 
-type tmpfiles_db map[string]*os.File
+type tmpfiles map[string]*os.File
 
 type Plotter struct {
-	proc     *plotter_process
+	proc     *plotterProcess
 	debug    bool
 	plotcmd  string
 	nplots   int    // number of currently active plots
 	style    string // current plotting style
-	tmpfiles tmpfiles_db
+	tmpfiles tmpfiles
 }
 
 func (self *Plotter) Cmd(format string, a ...interface{}) os.Error {
@@ -72,8 +63,6 @@ func (self *Plotter) Cmd(format string, a ...interface{}) os.Error {
 	n, err := io.WriteString(self.proc.stdin, cmd)
 
 	if self.debug {
-		//buf := new(bytes.Buffer)
-		//io.Copy(buf, self.proc.handle.Stdout)
 		fmt.Printf("cmd> %v", cmd)
 		fmt.Printf("res> %v\n", n)
 	}
@@ -98,23 +87,8 @@ func (self *Plotter) Close() (err os.Error) {
 	return err
 }
 
-func (self *Plotter) PlotNd(title string, data ...[]float64) os.Error {
-	ndims := len(data)
-
-	switch ndims {
-	case 1:
-		return self.PlotX(data[0], title)
-	case 2:
-		return self.PlotXY(data[0], data[1], title)
-	case 3:
-		return self.PlotXYZ(data[0], data[1], data[2], title)
-	}
-
-	return &gnuplot_error{fmt.Sprintf("invalid number of dims '%v'", ndims)}
-}
-
 func (self *Plotter) PlotX(data []float64, title string) os.Error {
-	f, err := ioutil.TempFile(os.TempDir(), g_gnuplot_prefix)
+	f, err := ioutil.TempFile(os.TempDir(), gplotPrefix)
 	if err != nil {
 		return err
 	}
@@ -140,100 +114,6 @@ func (self *Plotter) PlotX(data []float64, title string) os.Error {
 	return self.Cmd(line)
 }
 
-func (self *Plotter) PlotXY(x, y []float64, title string) os.Error {
-	npoints := min(len(x), len(y))
-
-	f, err := ioutil.TempFile(os.TempDir(), g_gnuplot_prefix)
-	if err != nil {
-		return err
-	}
-	fname := f.Name()
-	self.tmpfiles[fname] = f
-
-	for i := 0; i < npoints; i++ {
-		f.WriteString(fmt.Sprintf("%v %v\n", x[i], y[i]))
-	}
-
-	f.Close()
-	cmd := self.plotcmd
-	if self.nplots > 0 {
-		cmd = "replot"
-	}
-
-	var line string
-	if title == "" {
-		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, self.style)
-	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
-			cmd, fname, title, self.style)
-	}
-	self.nplots += 1
-	return self.Cmd(line)
-}
-
-func (self *Plotter) PlotXYZ(x, y, z []float64, title string) os.Error {
-	npoints := min(len(x), len(y))
-	npoints = min(npoints, len(z))
-	f, err := ioutil.TempFile(os.TempDir(), g_gnuplot_prefix)
-	if err != nil {
-		return err
-	}
-	fname := f.Name()
-	self.tmpfiles[fname] = f
-
-	for i := 0; i < npoints; i++ {
-		f.WriteString(fmt.Sprintf("%v %v %v\n", x[i], y[i], z[i]))
-	}
-
-	f.Close()
-	cmd := "splot" // Force 3D plot
-	if self.nplots > 0 {
-		cmd = "replot"
-	}
-
-	var line string
-	if title == "" {
-		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, self.style)
-	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
-			cmd, fname, title, self.style)
-	}
-	self.nplots += 1
-	return self.Cmd(line)
-}
-
-type Func func(x float64) float64
-
-func (self *Plotter) PlotFunc(data []float64, fct Func, title string) os.Error {
-
-	f, err := ioutil.TempFile(os.TempDir(), g_gnuplot_prefix)
-	if err != nil {
-		return err
-	}
-	fname := f.Name()
-	self.tmpfiles[fname] = f
-
-	for _, x := range data {
-		f.WriteString(fmt.Sprintf("%v %v\n", x, fct(x)))
-	}
-
-	f.Close()
-	cmd := self.plotcmd
-	if self.nplots > 0 {
-		cmd = "replot"
-	}
-
-	var line string
-	if title == "" {
-		line = fmt.Sprintf("%s \"%s\" with %s", cmd, fname, self.style)
-	} else {
-		line = fmt.Sprintf("%s \"%s\" title \"%s\" with %s",
-			cmd, fname, title, self.style)
-	}
-	self.nplots += 1
-	return self.Cmd(line)
-}
-
 func (self *Plotter) SetPlotCmd(cmd string) (err os.Error) {
 	switch cmd {
 	case "plot", "splot":
@@ -241,18 +121,23 @@ func (self *Plotter) SetPlotCmd(cmd string) (err os.Error) {
 	default:
 		err = os.NewError("invalid plot cmd [" + cmd + "]")
 	}
-	return err
+	return
 }
 
-func (self *Plotter) SetStyle(style string) (err os.Error) {
-	allowed := []string{
-		"lines", "points", "linepoints",
-		"impulses", "dots",
+var allowed []string = []string{
+		"lines",
+        "points",
+        "linepoints",
+		"impulses",
+        "dots",
 		"steps",
 		"errorbars",
 		"boxes",
 		"boxerrorbars",
-		"pm3d"}
+		"pm3d",
+}
+
+func (self *Plotter) SetStyle(style string) (err os.Error) {
 
 	for _, s := range allowed {
 		if s == style {
@@ -265,7 +150,7 @@ func (self *Plotter) SetStyle(style string) (err os.Error) {
 	fmt.Printf("** style '%v' not in allowed list %v\n", style, allowed)
 	fmt.Printf("** default to 'points'\n")
 	self.style = "points"
-	err = &gnuplot_error{fmt.Sprintf("invalid style '%s'", style)}
+	err = os.NewError(fmt.Sprintf("invalid style '%s'", style))
 
 	return err
 }
@@ -285,7 +170,7 @@ func (self *Plotter) SetZLabel(label string) os.Error {
 func (self *Plotter) SetLabels(labels ...string) os.Error {
 	ndims := len(labels)
 	if ndims > 3 || ndims <= 0 {
-		return &gnuplot_error{fmt.Sprintf("invalid number of dims '%v'", ndims)}
+		return os.NewError(fmt.Sprintf("invalid number of dims '%v'", ndims))
 	}
 	var err os.Error = nil
 
@@ -329,12 +214,12 @@ func (self *Plotter) ResetPlot() (err os.Error) {
 func NewPlotter(fname string, persist, debug bool) (*Plotter, os.Error) {
 	p := &Plotter{proc: nil, debug: debug, plotcmd: "plot",
 		nplots: 0, style: "points"}
-	p.tmpfiles = make(tmpfiles_db)
+	p.tmpfiles = make(tmpfiles)
 
 	if fname != "" {
 		panic("NewPlotter with fname is not yet supported")
 	} else {
-		proc, err := new_plotter_proc(persist)
+		proc, err := newPlotterProcess(persist)
 		if err != nil {
 			return nil, err
 		}
