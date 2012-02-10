@@ -23,54 +23,6 @@ import (
 // the system command for gnuplot
 var gnuplot string
 
-
-const defaults = "set datafile binary format=\"%%float64\" endian=big"
-
-const plotCmd = "plot \"-\" binary array=%d title \"%s\" with %s"
-
-// available styles
-var styles []string = []string{
-		"lines",
-        "points",
-        "linepoints",
-		"impulses",
-        "dots",
-		"steps",
-		"errorbars",
-		"boxes",
-		"boxerrorbars",
-		"pm3d",
-}
-
-func (self *Plotter) PlotX(data []float64, title string) (err os.Error) {
-    line := fmt.Sprintf(plotCmd, len(data), title, self.style)
-    err = self.cmd(line)
-    if err != nil {
-        return
-    }
-    err = binary.Write(self.conn.stdin, binary.BigEndian, data)
-    if err != nil {
-          return
-    }
-    return
-}
-
-func (self *Plotter) SetStyle(style string) {
-    // TODO: check validity
-    self.style = style
-}
-
-// resolve the gnuplot command on this
-// system, or panic if it is not available
-func init() {
-	var err os.Error
-	gnuplot, err = exec.LookPath("gnuplot")
-	if err != nil {
-        str := fmt.Sprintf("error finding gnuplot (is it installed?):\n%v\n", err)
-		panic(str)
-    }
-}
-
 // conn is the structure
 // that represents the connection to gnuplot
 type conn struct {
@@ -92,6 +44,39 @@ func newConn(persist bool) (*conn, os.Error) {
 	}
 	return &conn{cmd, stdin}, cmd.Start()
 }
+
+// resolve the gnuplot command on this
+// system, or panic if it is not available
+func init() {
+	var err os.Error
+	gnuplot, err = exec.LookPath("gnuplot")
+	if err != nil {
+        str := fmt.Sprintf("error finding gnuplot (is it installed?):\n%v\n", err)
+		panic(str)
+    }
+}
+
+func (self *Plotter) PlotX(data []float64, title string) (err os.Error) {
+    const plotCmd = "plot \"-\" binary array=%d title \"%s\" with %s"
+    line := fmt.Sprintf(plotCmd, len(data), title, self.style)
+    err = self.cmd(line)
+    if err != nil {
+        return
+    }
+    err = binary.Write(self.conn.stdin, binary.BigEndian, data)
+    if err != nil {
+          return
+    }
+    return
+}
+
+func (self *Plotter) SetStyle(style string) {
+    // TODO: check validity
+    self.style = style
+}
+
+
+
 
 type Plotter struct {
 	conn     *conn
@@ -136,6 +121,7 @@ func (self *Plotter) SetYLabel(label string) os.Error {
 }
 
 func NewPlotter(persist, debug bool) (plotter *Plotter, err os.Error) {
+    const defaults = "set datafile binary format=\"%%float64\" endian=big"
 	p := &Plotter{conn: nil, debug: debug, style: "points"}
 
 	conn, err := newConn(persist)
