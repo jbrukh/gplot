@@ -32,8 +32,7 @@ type conn struct {
 
 // create a new conn
 func newConn(persist bool) (*conn, os.Error) {
-	// TODO: make more efficient
-    args := []string{}
+    args := make([]string, 0, 10)
 	if persist {
 		args = append(args, "-persist")
 	}
