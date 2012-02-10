@@ -4,7 +4,7 @@ package main
 import "gplot"
 
 func main() {
-    p, err := gplot.NewPlotter(true, true)
+    p, err := gplot.NewPlotter(true)
     if err != nil {
         println("problem")
         return

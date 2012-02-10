@@ -32,14 +32,12 @@ func init() {
     }
 }
 
-
 type Plotter struct {
 	conn     *conn
-	debug    bool
 	style    string // current plotting style
 }
 
-func NewPlotter(persist, debug bool) (plotter *Plotter, err os.Error) {
+func NewPlotter(persist bool) (plotter *Plotter, err os.Error) {
     const defaults = "set datafile binary format=\"%%float64\" endian=big"
 	p := &Plotter{conn: nil, debug: debug, style: "points"}
 
