@@ -12,7 +12,7 @@ license.
 
 You can install by running:
 
-  $ build install
+    $ build install
 
 Please read the Go documentation about setting the $GOPATH. You
 should also have gnuplot installed, or the library will panic.
