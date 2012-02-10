@@ -15,7 +15,7 @@ slightly more appropriate for high-performance plotting.
 import (
 	"fmt"
 	"os"
-    "exec"
+	"exec"
 )
 
 // the system command for gnuplot
@@ -27,52 +27,52 @@ func init() {
 	var err os.Error
 	gnuplot, err = exec.LookPath("gnuplot")
 	if err != nil {
-        str := fmt.Sprintf("error finding gnuplot (is it installed?):\n%v\n", err)
+		str := fmt.Sprintf("error finding gnuplot (is it installed?):\n%v\n", err)
 		panic(str)
-    }
+	}
 }
 
 type Plotter struct {
-	conn     *conn
-	style    string // current plotting style
+	conn  *conn
+	style string // current plotting style
 }
 
 func NewPlotter(persist bool) (plotter *Plotter, err os.Error) {
-    const defaults = "set datafile binary format=\"%%float64\" endian=big"
+	const defaults = "set datafile binary format=\"%%float64\" endian=big"
 
-    p := &Plotter{style: "lines"}
+	p := &Plotter{style: "lines"}
 	conn, err := newConn(persist)
 	if err != nil {
 		return nil, err
 	}
 	p.conn = conn
-    
-    err = p.conn.cmd(defaults)
+
+	err = p.conn.cmd(defaults)
 	if err != nil {
-        println("could not set binary mode")
-        return nil, p.conn.closeConn()
-    }
-    return p, nil
+		println("could not set binary mode")
+		return nil, p.conn.closeConn()
+	}
+	return p, nil
 }
 
 // plot a basic line graph
 func (p *Plotter) PlotX(data []float64, title string) (err os.Error) {
-    // the default plot command
-    const plotCmd = "plot \"-\" binary array=%d title \"%s\" with %s"
-    line := fmt.Sprintf(plotCmd, len(data), title, p.style)
-    err = p.conn.cmd(line)
-    if err != nil {
-        return
-    }
-    p.conn.data(data)
-    if err != nil {
-        return
-    }
-    return
+	// the default plot command
+	const plotCmd = "plot \"-\" binary array=%d title \"%s\" with %s"
+	line := fmt.Sprintf(plotCmd, len(data), title, p.style)
+	err = p.conn.cmd(line)
+	if err != nil {
+		return
+	}
+	p.conn.data(data)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (p *Plotter) Close() os.Error {
-    return p.conn.closeConn()
+	return p.conn.closeConn()
 }
 
 func (p *Plotter) CheckedCmd(format string, a ...interface{}) {
