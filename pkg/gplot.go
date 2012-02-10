@@ -39,18 +39,25 @@ type Plotter struct {
 
 func NewPlotter(persist bool) (plotter *Plotter, err os.Error) {
     const defaults = "set datafile binary format=\"%%float64\" endian=big"
-	p := &Plotter{conn: nil, debug: debug, style: "points"}
 
+    p := &Plotter{style: "lines"}
 	conn, err := newConn(persist)
 	if err != nil {
 		return nil, err
 	}
 	p.conn = conn
-    p.conn.cmd(defaults)
-	return p, nil
+    
+    err = p.conn.cmd(defaults)
+	if err != nil {
+        println("could not set binary mode")
+        return nil, p.conn.closeConn()
+    }
+    return p, nil
 }
 
+// plot a basic line graph
 func (p *Plotter) PlotX(data []float64, title string) (err os.Error) {
+    // the default plot command
     const plotCmd = "plot \"-\" binary array=%d title \"%s\" with %s"
     line := fmt.Sprintf(plotCmd, len(data), title, p.style)
     err = p.conn.cmd(line)
@@ -59,20 +66,14 @@ func (p *Plotter) PlotX(data []float64, title string) (err os.Error) {
     }
     p.conn.data(data)
     if err != nil {
-          return
+        return
     }
     return
 }
 
-func (p *Plotter) SetStyle(style string) {
-    // TODO: check validity
-    p.style = style
+func (p *Plotter) Close() os.Error {
+    return p.conn.closeConn()
 }
-
-
-
-
-
 
 func (p *Plotter) CheckedCmd(format string, a ...interface{}) {
 	err := p.conn.cmd(format, a...)
@@ -81,13 +82,3 @@ func (p *Plotter) CheckedCmd(format string, a ...interface{}) {
 		panic(str)
 	}
 }
-
-
-func (p *Plotter) SetXLabel(label string) os.Error {
-	return p.conn.cmd(fmt.Sprintf("set xlabel '%s'", label))
-}
-
-func (p *Plotter) SetYLabel(label string) os.Error {
-	return p.conn.cmd(fmt.Sprintf("set ylabel '%s'", label))
-}
-

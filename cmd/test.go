@@ -9,6 +9,5 @@ func main() {
         println("problem")
         return
     }
-    p.SetStyle("lines")
-    p.PlotX([]float64{1, 2}, "jake")
+    p.PlotX([]float64{1, 2, 4, 8, 16, 32}, "jake")
 }
