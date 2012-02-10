@@ -9,7 +9,7 @@ GOFILES=\
 	gplot.go\
 
 # gb: this is the local install
-GBROOT=..
+GBROOT=.
 
 # gb: compile/link against local install
 GCIMPORTS+= -I $(GBROOT)/_obj
@@ -21,10 +21,6 @@ GOPATHSEP=;
 endif
 GCIMPORTS=-I $(subst $(GOPATHSEP),/pkg/$(GOOS)_$(GOARCH) -I , $(GOPATH))/pkg/$(GOOS)_$(GOARCH)
 LDIMPORTS=-L $(subst $(GOPATHSEP),/pkg/$(GOOS)_$(GOARCH) -L , $(GOPATH))/pkg/$(GOOS)_$(GOARCH)
-
-# gb: copy to local install
-$(GBROOT)/_obj/$(TARG).a: _obj/$(TARG).a
-	mkdir -p $(dir $@); cp -f $< $@
 
 package: $(GBROOT)/_obj/$(TARG).a
 
