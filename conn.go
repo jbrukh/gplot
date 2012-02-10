@@ -40,9 +40,7 @@ func (c *conn) closeConn() (err os.Error) {
 
 func (c *conn) cmd(format string, a ...interface{}) os.Error {
 	command := fmt.Sprintf(format, a...) + "\n"
-	n, err := io.WriteString(c.stdin, command)
-	fmt.Printf("cmd$ %v", command)
-	fmt.Printf("cmd$ <%v\n", n)
+	_, err := io.WriteString(c.stdin, command)
 	return err
 }
 
