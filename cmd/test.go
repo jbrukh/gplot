@@ -4,10 +4,11 @@ package main
 import "gplot"
 
 func main() {
-    p, err := gplot.NewPlotter("", true, true)
+    p, err := gplot.NewPlotter(true, true)
     if err != nil {
         println("problem")
         return
     }
-    p.PlotX([]float64{0,1}, "jake")
+    p.SetStyle("lines")
+    p.PlotX([]float64{1, 2}, "jake")
 }
