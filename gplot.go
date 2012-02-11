@@ -49,8 +49,8 @@ func NewPlotter(persist bool) (plotter *Plotter, err os.Error) {
 
 	err = p.conn.cmd(defaults)
 	if err != nil {
-		println("could not set binary mode")
-		return nil, p.conn.closeConn()
+		p.conn.closeConn()
+        return nil, os.NewError("could not set binary mode")
 	}
 	return p, nil
 }
@@ -71,6 +71,8 @@ func (p *Plotter) PlotX(data []float64, title string) (err os.Error) {
 	return
 }
 
+// close the plotter, and gracefully release
+// resources
 func (p *Plotter) Close() os.Error {
 	return p.conn.closeConn()
 }
