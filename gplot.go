@@ -50,7 +50,7 @@ func NewPlotter(persist bool) (plotter *Plotter, err os.Error) {
 	err = p.conn.cmd(defaults)
 	if err != nil {
 		p.conn.closeConn()
-		return nil, os.NewError("could not set binary mode")
+        return nil, os.NewError("could not set binary mode")
 	}
 	return p, nil
 }

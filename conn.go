@@ -11,8 +11,8 @@ import (
 // conn is the structure
 // that represents the connection to gnuplot
 type conn struct {
-	handle *exec.Cmd
-	in     io.WriteCloser
+	handle  *exec.Cmd
+	in      io.WriteCloser
 }
 
 // create a new conn
@@ -23,12 +23,12 @@ func newConn(persist bool) (c *conn, err os.Error) {
 	}
 	cmd := exec.Command(gnuplot, args...)
 
-	in, err := cmd.StdinPipe()
+    in, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
 	}
 
-	return &conn{cmd, in}, cmd.Start()
+    return &conn{cmd, in}, cmd.Start()
 }
 
 // close a connection
