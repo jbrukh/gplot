@@ -14,8 +14,7 @@ slightly more appropriate for high-performance plotting.
 
 import (
 	"fmt"
-	"os"
-	"exec"
+	"os/exec"
 )
 
 // the system command for gnuplot
@@ -24,7 +23,7 @@ var gnuplot string
 // resolve the gnuplot command on this
 // system, or panic if it is not available
 func init() {
-	var err os.Error
+	var err error
 	gnuplot, err = exec.LookPath("gnuplot")
 	if err != nil {
 		str := fmt.Sprintf("error finding gnuplot (is it installed?):\n%v\n", err)
@@ -37,7 +36,7 @@ type Plotter struct {
 	style string // current plotting style
 }
 
-func NewPlotter(persist bool) (plotter *Plotter, err os.Error) {
+func NewPlotter(persist bool) (plotter *Plotter, err error) {
 	const defaults = "set datafile binary format=\"%%float64\" endian=big"
 
 	p := &Plotter{style: "lines"}
@@ -55,8 +54,12 @@ func NewPlotter(persist bool) (plotter *Plotter, err os.Error) {
 	return p, nil
 }
 
+func (p *Plotter) SetStyle(style string) {
+	p.style = style
+}
+
 // plot a basic line graph
-func (p *Plotter) PlotX(data []float64, title string) (err os.Error) {
+func (p *Plotter) PlotX(data []float64, title string) (err error) {
 	// the default plot command
 	const plotCmd = "plot \"-\" binary array=%d title \"%s\" with %s"
 	line := fmt.Sprintf(plotCmd, len(data), title, p.style)
@@ -71,7 +74,7 @@ func (p *Plotter) PlotX(data []float64, title string) (err os.Error) {
 	return
 }
 
-func (p *Plotter) Close() os.Error {
+func (p *Plotter) Close() error {
 	return p.conn.closeConn()
 }
 

@@ -1,11 +1,10 @@
 package gplot
 
 import (
-	"fmt"
-	"exec"
-	"os"
-	"io"
 	"encoding/binary"
+	"fmt"
+	"io"
+	"os/exec"
 )
 
 // conn is the structure
@@ -16,7 +15,7 @@ type conn struct {
 }
 
 // create a new conn
-func newConn(persist bool) (*conn, os.Error) {
+func newConn(persist bool) (*conn, error) {
 	args := make([]string, 0, 10)
 	if persist {
 		args = append(args, "-persist")
@@ -30,7 +29,7 @@ func newConn(persist bool) (*conn, os.Error) {
 }
 
 // close a connection
-func (c *conn) closeConn() (err os.Error) {
+func (c *conn) closeConn() (err error) {
 	if c.handle != nil {
 		c.stdin.Close()
 		err = c.handle.Wait()
@@ -38,14 +37,14 @@ func (c *conn) closeConn() (err os.Error) {
 	return err
 }
 
-func (c *conn) cmd(format string, a ...interface{}) os.Error {
+func (c *conn) cmd(format string, a ...interface{}) error {
 	command := fmt.Sprintf(format, a...) + "\n"
 	_, err := io.WriteString(c.stdin, command)
 	return err
 }
 
 // data will write binary data to the gp pipe
-func (c *conn) data(data interface{}) (err os.Error) {
+func (c *conn) data(data interface{}) (err error) {
 	err = binary.Write(c.stdin, binary.BigEndian, data)
 	return
 }
