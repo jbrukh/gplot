@@ -10,13 +10,17 @@ license.
 
 ### Installation
 
-You can install by running:
+You need at least the following weekly version of Go:
 
-    $ build install
+    go version weekly.2012-02-07 +52ba9506bd99
 
-Please read the Go documentation about setting the $GOPATH. You
-should also have gnuplot installed, or the library will panic.
-(I used MacPorts to install gnuplot on Mac OS X Lion.)
+You can then use the 'go' command to obtain the package:
+
+    $ go get github.com/jbrukh/gplot
+
+To install the package and all of the executables, use:
+
+    $ go install -v github.com/jbrukh/gplot/...
 
 ### Documentation
 
