@@ -58,10 +58,11 @@ func (p *Plotter) SetStyle(style string) {
 	p.style = style
 }
 
+const plotCmd = "plot \"-\" binary array=%v title \"%s\" with %s"
+
 // plot a basic line graph
 func (p *Plotter) PlotX(data []float64, title string) (err error) {
 	// the default plot command
-	const plotCmd = "plot \"-\" binary array=%d title \"%s\" with %s"
 	line := fmt.Sprintf(plotCmd, len(data), title, p.style)
 	err = p.conn.cmd(line)
 	if err != nil {
@@ -72,6 +73,10 @@ func (p *Plotter) PlotX(data []float64, title string) (err error) {
 		return
 	}
 	return
+}
+
+func (p *Plotter) PlotTwo(data1 []float64, data2 []float64) {
+
 }
 
 func (p *Plotter) Close() error {
