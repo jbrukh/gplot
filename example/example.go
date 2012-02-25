@@ -10,5 +10,5 @@ func main() {
 		return
 	}
 	defer p.Close()
-	p.PlotX([]float64{1, 2, 4, 8, 16, 32}, "jake")
+	p.Dual([]float64{1, 2, 4, 8, 16, 32}, []float64{2,3,4,5,4,5}, "jake1", "jake2")
 }

@@ -59,6 +59,7 @@ func (p *Plotter) SetStyle(style string) {
 }
 
 const plotCmd = "plot \"-\" binary array=%v title \"%s\" with %s"
+const dualPlotCmd = "plot \"-\" binary array=%v title \"%s\" with %s, \"-\" binary array=%v title \"%s\" with %s"
 
 // plot a basic line graph
 func (p *Plotter) PlotX(data []float64, title string) (err error) {
@@ -75,8 +76,20 @@ func (p *Plotter) PlotX(data []float64, title string) (err error) {
 	return
 }
 
-func (p *Plotter) PlotTwo(data1 []float64, data2 []float64) {
+func (p *Plotter) Dual(data1, data2 []float64, title1, title2 string) (err error) {
+	// the default plot command
+	line := fmt.Sprintf(dualPlotCmd, len(data1), title1, p.style, len(data2), title2, p.style)
+	err = p.conn.cmd(line)
+	if err != nil {
+		return
+	}
+	p.conn.data(data1)
+	p.conn.data(data2)
 
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (p *Plotter) Close() error {
