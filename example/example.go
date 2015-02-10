@@ -1,7 +1,7 @@
 //target:test
 package main
 
-import "gplot"
+import "github.com/jbrukh/gplot"
 
 func main() {
 	p, err := gplot.NewPlotter(true)
